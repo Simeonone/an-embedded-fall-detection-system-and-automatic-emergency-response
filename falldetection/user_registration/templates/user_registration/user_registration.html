@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .emergency-contact {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Registration</h1>
+    <form id="registrationForm" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div id="emergencyContactsContainer"></div>
+        <input type="submit" value="Register">
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const emergencyContactsInput = document.querySelector('#id_emergency_contacts');
+            const emergencyContactsContainer = document.querySelector('#emergencyContactsContainer');
+
+            emergencyContactsInput.addEventListener('change', function() {
+                const numContacts = parseInt(this.value);
+                emergencyContactsContainer.innerHTML = '';
+
+                for (let i = 1; i <= numContacts; i++) {
+                    const contactDiv = document.createElement('div');
+                    contactDiv.classList.add('emergency-contact');
+                    contactDiv.innerHTML = `
+                        <h3>Emergency Contact ${i}</h3>
+                        <label for="contact${i}_name">Name:</label>
+                        <input type="text" id="contact${i}_name" name="contact${i}_name" required>
+                        <label for="contact${i}_relationship">Relationship:</label>
+                        <input type="text" id="contact${i}_relationship" name="contact${i}_relationship" required>
+                        <label for="contact${i}_phone">Phone Number:</label>
+                        <input type="tel" id="contact${i}_phone" name="contact${i}_phone" required>
+                    `;
+                    emergencyContactsContainer.appendChild(contactDiv);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
