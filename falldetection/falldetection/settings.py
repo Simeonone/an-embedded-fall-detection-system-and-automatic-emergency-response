@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'detection',
     'rest_framework',
     'user_registration',
+    'authentication',
 ]
 
 MIDDLEWARE = [
