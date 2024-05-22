@@ -53,20 +53,31 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
     </style>
-        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-        <script>
-            $(function() {
-                $("#id_date_of_birth").datepicker({
-                    changeMonth: true,
-                    changeYear: true,
-                    yearRange: "-100:+0",
-                    dateFormat: "yy-mm-dd"
-                });
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script>
+        $(function() {
+            $("#id_date_of_birth").datepicker({
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "-100:+0",
+                dateFormat: "yy-mm-dd"
             });
-        </script>
+        });
+    </script>
 </head>
 <body>
     <h1>User Registration</h1>
@@ -78,6 +89,10 @@
         <div id="emergencyContactsContainer"></div>
         <input type="submit" value="Register">
     </form>
+
+    <div class="login-link">
+        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
