@@ -31,6 +31,18 @@
         .location p {
             margin: 10px 0;
         }
+        .logout-btn {
+        display: inline-block;
+        background-color: #ff0000;
+        color: #fff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        }
+        .logout-btn:hover {
+            background-color: #cc0000;
+        }
     </style>
 </head>
 <body>
@@ -39,6 +51,19 @@
         <p><strong>Email:</strong> {{ user.email }}</p>
         <p><strong>Phone Number:</strong> {{ user.phone_number }}</p>
         <p><strong>Device Status:</strong> {% if device_connected %}Connected{% else %}Disconnected{% endif %}</p>
+        <h3>Emergency Contacts:</h3>
+        <ul>
+            {% for contact in emergency_contacts %}
+                <li>
+                    <strong>Name:</strong> {{ contact.name }}<br>
+                    <strong>Relationship:</strong> {{ contact.relationship }}<br>
+                    <strong>Phone:</strong> {{ contact.phone }}
+                </li>
+            {% empty %}
+                <li>No emergency contacts found</li>
+            {% endfor %}
+        </ul>
+        <a href="{%url 'logout'%}" class = "logout-btn"> Logout</a>
     </div>
     
     <div class="location">

@@ -1,4 +1,5 @@
 from django.db import models
+# from .models import User
 
 class User(models.Model):
     full_name = models.CharField(max_length=100)
@@ -12,3 +13,12 @@ class User(models.Model):
 
     def __str__(self):
         return self.full_name
+
+class EmergencyContact(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emergency_contacts')
+    name = models.CharField(max_length=100)
+    relationship = models.CharField(max_length=50)
+    phone = models.CharField(max_length=20)
+
+    def __str__(self):
+        return self.name

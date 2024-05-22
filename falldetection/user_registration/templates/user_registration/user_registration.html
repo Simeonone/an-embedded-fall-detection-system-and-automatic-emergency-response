@@ -73,6 +73,8 @@
     <form id="registrationForm" method="POST">
         {% csrf_token %}
         {{ form.as_p }}
+        <!-- <label for="id_emergency_contacts">Number of Emergency Contacts:</label> -->
+        <!-- <input type="number" name="emergency_contacts" id="id_emergency_contacts" min="1" max="3" required> -->
         <div id="emergencyContactsContainer"></div>
         <input type="submit" value="Register">
     </form>
@@ -91,12 +93,12 @@
                     contactDiv.classList.add('emergency-contact');
                     contactDiv.innerHTML = `
                         <h3>Emergency Contact ${i}</h3>
-                        <label for="contact${i}_name">Name:</label>
-                        <input type="text" id="contact${i}_name" name="contact${i}_name" required>
-                        <label for="contact${i}_relationship">Relationship:</label>
-                        <input type="text" id="contact${i}_relationship" name="contact${i}_relationship" required>
-                        <label for="contact${i}_phone">Phone Number:</label>
-                        <input type="tel" id="contact${i}_phone" name="contact${i}_phone" required>
+                        <label for="contact_${i}_name">Name:</label>
+                        <input type="text" id="contact_${i}_name" name="contact_${i}_name" required>
+                        <label for="contact_${i}_relationship">Relationship:</label>
+                        <input type="text" id="contact_${i}_relationship" name="contact_${i}_relationship" required>
+                        <label for="contact_${i}_phone">Phone Number:</label>
+                        <input type="tel" id="contact_${i}_phone" name="contact_${i}_phone" required>
                     `;
                     emergencyContactsContainer.appendChild(contactDiv);
                 }
