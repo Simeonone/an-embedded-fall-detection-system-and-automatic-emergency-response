@@ -84,6 +84,15 @@
     <form id="registrationForm" method="POST">
         {% csrf_token %}
         {{ form.as_p }}
+        <!-- {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %} -->
         <!-- <label for="id_emergency_contacts">Number of Emergency Contacts:</label> -->
         <!-- <input type="number" name="emergency_contacts" id="id_emergency_contacts" min="1" max="3" required> -->
         <div id="emergencyContactsContainer"></div>
