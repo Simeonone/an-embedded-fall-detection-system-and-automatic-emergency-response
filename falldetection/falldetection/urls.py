@@ -22,8 +22,9 @@ from authentication.views import login_view, dashboard_view, logout_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('detection.urls')),
-    path('login/', login_view, name='login'),
-    path('logout/', logout_view, name='logout'),
-    path('dashboard/', dashboard_view, name='dashboard'),
+    # path('login/', login_view, name='login'),
+    # path('logout/', logout_view, name='logout'),
+    # path('dashboard/', dashboard_view, name='dashboard'),
+    path('', include('authentication.urls')),
     path('register/', user_registration, name='user_registration'),
 ]

@@ -11,9 +11,14 @@
         }
         h1 {
             color: #333;
+            text-align: center;
         }
         .info {
             margin-bottom: 20px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
         .info p {
             margin: 5px 0;
@@ -32,16 +37,45 @@
             margin: 10px 0;
         }
         .logout-btn {
-        display: inline-block;
-        background-color: #ff0000;
-        color: #fff;
-        padding: 10px 20px;
-        text-decoration: none;
-        border-radius: 5px;
-        margin-top: 20px;
+            display: inline-block;
+            background-color: #ff0000;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
         }
         .logout-btn:hover {
             background-color: #cc0000;
+        }
+        .emergency-contacts {
+            margin-top: 20px;
+        }
+        .emergency-contacts h3 {
+            margin-bottom: 10px;
+        }
+        .emergency-contacts ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .emergency-contacts li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .pdf-button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .pdf-button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
@@ -64,13 +98,21 @@
             {% endfor %}
         </ul>
         <a href="{%url 'logout'%}" class = "logout-btn"> Logout</a>
+        <!-- Inside the <div class="info"> section -->
+        <div class="fall-detection-info">
+            <h3>Fall Detection Report:</h3>
+            <a href="{% url 'fall_detection_pdf' %}" target="_blank" class="pdf-button">View Fall Detection Report</a>
+        </div>
     </div>
     
     <div class="location">
         <h2>Real-time Location (Updates every 10 seconds)</h2>
         <p id="location"></p>
     </div>
-    
+
+    {% if fall_detection_data %}
+    <a href="{% url 'fall_detection_pdf' %}" target="_blank" class="pdf-button">Download Fall Detection PDF</a>
+    {% endif %}
     <script>
         function getLocation() {
             if (navigator.geolocation) {
