@@ -8,6 +8,9 @@ from django.http import HttpResponse
 import requests
 import io
 import base64
+from django.http import StreamingHttpResponse
+
+
 # import matplotlib
 # matplotlib.use('Agg') set the backend to Agg
 # import matplotlib.pyplot as plt
@@ -130,22 +133,27 @@ def dashboard_view(request):
     
     if user_id:
         user = User.objects.get(id=user_id)
-        # emergency_contacts = get_emergency_contacts(user)
         emergency_contacts = EmergencyContact.objects.filter(user=user)
         device_connected = False  # Dummy value, update later
-        # Start the serial_communication.py script with the user_id as an argument
         latest_fall_detection = FallDetection.objects.order_by('-timestamp').first()
-        # subprocess.Popen(["python", "serial_communication.py", str(user_id)])
+        
+        if request.method == 'POST':
+            # Fall detection message received
+            def event_stream():
+                yield 'data: Fall detected!\n\n'
+            
+            response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'
+            return response
+        
         return render(request, 'authentication/dashboard.html', 
                       {
-                    #     'user': user, 
-                    #    'device_connected': device_connected, 
-                    #    'emergency_contacts': emergency_contacts
-                    'user': user,
-                    'emergency_contacts': emergency_contacts,
-                    'device_connected': device_connected,
-                    'latest_fall_detection': latest_fall_detection
-                       })
+                          'user': user,
+                          'emergency_contacts': emergency_contacts,
+                          'device_connected': device_connected,
+                          'latest_fall_detection': latest_fall_detection
+                      })
     else:
         return redirect('login')
 def get_emergency_contacts(user):

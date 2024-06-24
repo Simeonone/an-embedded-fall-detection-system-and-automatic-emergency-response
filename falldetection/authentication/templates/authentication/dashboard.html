@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Dashboard</title>
     <style>
@@ -9,10 +10,12 @@
             margin: 0;
             padding: 20px;
         }
+
         h1 {
             color: #333;
             text-align: center;
         }
+
         .info {
             margin-bottom: 20px;
             background-color: #fff;
@@ -20,22 +23,27 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
         .info p {
             margin: 5px 0;
         }
+
         .location {
             background-color: #fff;
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
         .location h2 {
             color: #333;
             margin-top: 0;
         }
+
         .location p {
             margin: 10px 0;
         }
+
         .logout-btn {
             display: inline-block;
             background-color: #ff0000;
@@ -45,19 +53,24 @@
             border-radius: 5px;
             margin-top: 20px;
         }
+
         .logout-btn:hover {
             background-color: #cc0000;
         }
+
         .emergency-contacts {
             margin-top: 20px;
         }
+
         .emergency-contacts h3 {
             margin-bottom: 10px;
         }
+
         .emergency-contacts ul {
             list-style-type: none;
             padding: 0;
         }
+
         .emergency-contacts li {
             margin-bottom: 10px;
             padding: 10px;
@@ -65,6 +78,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+
         .pdf-button {
             display: inline-block;
             background-color: #4CAF50;
@@ -74,11 +88,44 @@
             border-radius: 5px;
             margin-top: 20px;
         }
+
         .pdf-button:hover {
             background-color: #45a049;
         }
+
+        .modal {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        #cancelSOS {
+            background-color: #f44336;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
     </style>
 </head>
+
 <body>
     <h1>Welcome, {{ user.full_name }}</h1>
     <div class="info">
@@ -88,23 +135,30 @@
         <h3>Emergency Contacts:</h3>
         <ul>
             {% for contact in emergency_contacts %}
-                <li>
-                    <strong>Name:</strong> {{ contact.name }}<br>
-                    <strong>Relationship:</strong> {{ contact.relationship }}<br>
-                    <strong>Phone:</strong> {{ contact.phone }}
-                </li>
+            <li>
+                <strong>Name:</strong> {{ contact.name }}<br>
+                <strong>Relationship:</strong> {{ contact.relationship }}<br>
+                <strong>Phone:</strong> {{ contact.phone }}
+            </li>
             {% empty %}
-                <li>No emergency contacts found</li>
+            <li>No emergency contacts found</li>
             {% endfor %}
         </ul>
-        <a href="{%url 'logout'%}" class = "logout-btn"> Logout</a>
+        <a href="{%url 'logout'%}" class="logout-btn"> Logout</a>
         <!-- Inside the <div class="info"> section -->
         <div class="fall-detection-info">
             <h3>Fall Detection Report:</h3>
             <a href="{% url 'fall_detection_pdf' %}" target="_blank" class="pdf-button">View Fall Detection Report</a>
         </div>
     </div>
-    
+    <div id="fallDetectionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Fall Detected!</h2>
+            <p>It looks like you have been in an accident. Emergency SOS will be triggered if you don't respond in <span
+                    id="countdown">7</span> seconds.</p>
+            <button id="cancelSOS">Cancel SOS</button>
+        </div>
+    </div>
     <div class="location">
         <h2>Real-time Location (Updates every 10 seconds)</h2>
         <p id="location"></p>
@@ -114,6 +168,10 @@
     <a href="{% url 'fall_detection_pdf' %}" target="_blank" class="pdf-button">Download Fall Detection PDF</a>
     {% endif %}
     <script>
+        let latestProcessedFallId = parseInt(localStorage.getItem('latestProcessedFallId')) || 0;
+        let lastModalTime = 0;
+        const FALL_WINDOW = 10000; // 10 seconds window for fall detections
+        const COOLDOWN_PERIOD = 60000; // 1 minute cooldown after showing modal
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError);
@@ -121,14 +179,14 @@
                 document.getElementById("location").innerHTML = "Geolocation is not supported by this browser.";
             }
         }
-        
+
         function showPosition(position) {
             document.getElementById("location").innerHTML = "Latitude: " + position.coords.latitude +
-            "<br>Longitude: " + position.coords.longitude;
+                "<br>Longitude: " + position.coords.longitude;
         }
-        
+
         function showError(error) {
-            switch(error.code) {
+            switch (error.code) {
                 case error.PERMISSION_DENIED:
                     document.getElementById("location").innerHTML = "User denied the request for Geolocation.";
                     break;
@@ -143,12 +201,69 @@
                     break;
             }
         }
-        
+
+        function fetchFallDetectionData() {
+            const currentTime = Date.now();
+            if (currentTime - lastModalTime < COOLDOWN_PERIOD) return;
+
+            fetch('http://localhost:8000/api/fall-detection-data/list/')
+                .then(response => response.json())
+                .then(data => {
+                    const newFalls = data.filter(fall => fall.id > latestProcessedFallId);
+                    if (newFalls.length > 0) {
+                        console.log('New Fall Detections:', newFalls);
+                        latestProcessedFallId = Math.max(...newFalls.map(fall => fall.id));
+                        localStorage.setItem('latestProcessedFallId', latestProcessedFallId);
+
+                        if (currentTime - lastModalTime > FALL_WINDOW) {
+                            showFallDetectionModal();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching fall detection data:', error);
+                });
+        }
+
+        function showFallDetectionModal() {
+            document.getElementById('fallDetectionModal').style.display = 'block';
+            lastModalTime = Date.now();
+            let secondsLeft = 7;
+            updateCountdown(secondsLeft);
+
+            let countdownTimer = setInterval(() => {
+                secondsLeft--;
+                updateCountdown(secondsLeft);
+
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    console.log("Emergency SOS triggered!");
+                    hideModal();
+                }
+            }, 1000);
+        }
+
+        function updateCountdown(seconds) {
+            document.getElementById('countdown').textContent = seconds;
+        }
+
+        function hideModal() {
+            document.getElementById('fallDetectionModal').style.display = 'none';
+        }
+
+        document.getElementById('cancelSOS').addEventListener('click', function () {
+            console.log("SOS cancelled by user");
+            hideModal();
+        });
+
+        // Fetch fall detection data every second
+        setInterval(fetchFallDetectionData, 1000);
         // Update location every 10 seconds
         setInterval(getLocation, 10000);
-        
+
         // Initial location update
         getLocation();
     </script>
 </body>
+
 </html>
