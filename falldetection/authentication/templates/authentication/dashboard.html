@@ -123,6 +123,27 @@
             cursor: pointer;
             width: 100%;
         }
+
+        .countdown-circle {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .countdown-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .countdown-circle-path {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            stroke-width: 10;
+            stroke: #f44336;
+            fill: none;
+            transition: stroke-dashoffset 1s linear;
+        }
     </style>
 </head>
 
@@ -154,6 +175,12 @@
     <div id="fallDetectionModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Fall Detected!</h2>
+            <div class="countdown-circle">
+                <svg viewBox="0 0 100 100">
+                    <path class="countdown-circle-path" d="M 50,50 m 0,-45 a 45,45 0 1 1 0,90 a 45,45 0 1 1 0,-90">
+                    </path>
+                </svg>
+            </div>
             <p>It looks like you have been in an accident. Emergency SOS will be triggered if you don't respond in <span
                     id="countdown">7</span> seconds.</p>
             <button id="cancelSOS">Cancel SOS</button>
@@ -229,14 +256,19 @@
 
         function showFallDetectionModal() {
             document.getElementById('fallDetectionModal').style.display = 'block';
-            modalVisible = true; // Set modalVisible to true when showing the modal
+            modalVisible = true;
             lastModalTime = Date.now();
             let secondsLeft = 7;
+            const countdownCirclePath = document.querySelector('.countdown-circle-path');
+            const countdownCirclePathLength = countdownCirclePath.getTotalLength();
+            countdownCirclePath.style.strokeDashoffset = countdownCirclePathLength;
             updateCountdown(secondsLeft);
 
             countdownTimer = setInterval(() => {
                 secondsLeft--;
                 updateCountdown(secondsLeft);
+                const progress = secondsLeft / 7;
+                countdownCirclePath.style.strokeDashoffset = countdownCirclePathLength * progress;
 
                 if (secondsLeft <= 0) {
                     clearInterval(countdownTimer);
