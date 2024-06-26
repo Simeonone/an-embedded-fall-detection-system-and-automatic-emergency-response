@@ -171,6 +171,7 @@
         let latestProcessedFallId = parseInt(localStorage.getItem('latestProcessedFallId')) || 0;
         let lastModalTime = 0;
         let countdownTimer = null;
+        let modalVisible = false; // This variable tracks modal visibility
         const FALL_WINDOW = 10000; // 10 seconds window for fall detections
         const COOLDOWN_PERIOD = 60000; // 1 minute cooldown after showing modal
         function getLocation() {
@@ -205,7 +206,7 @@
 
         function fetchFallDetectionData() {
             const currentTime = Date.now();
-            if (currentTime - lastModalTime < COOLDOWN_PERIOD) return;
+            if (currentTime - lastModalTime < COOLDOWN_PERIOD || modalVisible) return; // Check if modal is visible
 
             fetch('http://localhost:8000/api/fall-detection-data/list/')
                 .then(response => response.json())
@@ -216,7 +217,7 @@
                         latestProcessedFallId = Math.max(...newFalls.map(fall => fall.id));
                         localStorage.setItem('latestProcessedFallId', latestProcessedFallId);
 
-                        if (currentTime - lastModalTime > FALL_WINDOW) {
+                        if (currentTime - lastModalTime > FALL_WINDOW && !modalVisible) { // Check if modal is not visible
                             showFallDetectionModal();
                         }
                     }
@@ -228,6 +229,7 @@
 
         function showFallDetectionModal() {
             document.getElementById('fallDetectionModal').style.display = 'block';
+            modalVisible = true; // Set modalVisible to true when showing the modal
             lastModalTime = Date.now();
             let secondsLeft = 7;
             updateCountdown(secondsLeft);
@@ -250,6 +252,7 @@
 
         function hideModal() {
             document.getElementById('fallDetectionModal').style.display = 'none';
+            modalVisible = false; // Set modalVisible to false when hiding the modal
             clearInterval(countdownTimer);
         }
 
