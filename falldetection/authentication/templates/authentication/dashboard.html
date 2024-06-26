@@ -170,6 +170,7 @@
     <script>
         let latestProcessedFallId = parseInt(localStorage.getItem('latestProcessedFallId')) || 0;
         let lastModalTime = 0;
+        let countdownTimer = null;
         const FALL_WINDOW = 10000; // 10 seconds window for fall detections
         const COOLDOWN_PERIOD = 60000; // 1 minute cooldown after showing modal
         function getLocation() {
@@ -231,7 +232,7 @@
             let secondsLeft = 7;
             updateCountdown(secondsLeft);
 
-            let countdownTimer = setInterval(() => {
+            countdownTimer = setInterval(() => {
                 secondsLeft--;
                 updateCountdown(secondsLeft);
 
@@ -249,6 +250,7 @@
 
         function hideModal() {
             document.getElementById('fallDetectionModal').style.display = 'none';
+            clearInterval(countdownTimer);
         }
 
         document.getElementById('cancelSOS').addEventListener('click', function () {
