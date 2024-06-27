@@ -273,9 +273,28 @@
                 if (secondsLeft <= 0) {
                     clearInterval(countdownTimer);
                     console.log("Emergency SOS triggered!");
+                    showNotification();
                     hideModal();
                 }
             }, 1000);
+        }
+
+        function showNotification() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Fall Detection Alert', {
+                    body: 'Emergency SOS has been triggered!',
+                    icon: 'C:\\Users\\USER\\Documents\\School project\\fall detection system\\falldetection\\sos.jpg'
+                });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('Fall Detection Alert', {
+                            body: 'Emergency SOS has been triggered!',
+                            icon: 'C:\\Users\\USER\\Documents\\School project\\fall detection system\\falldetection\\sos.jpg'
+                        });
+                    }
+                });
+            }
         }
 
         function updateCountdown(seconds) {
