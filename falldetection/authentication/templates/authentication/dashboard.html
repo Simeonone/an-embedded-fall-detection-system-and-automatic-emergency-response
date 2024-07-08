@@ -273,10 +273,63 @@
                 if (secondsLeft <= 0) {
                     clearInterval(countdownTimer);
                     console.log("Emergency SOS triggered!");
+                    sendEmergencySMS();
                     showNotification();
                     hideModal();
                 }
             }, 1000);
+        }
+
+        function sendEmergencySMS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const locationLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+                    fetch('{% url "send_emergency_sms" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ location: locationLink })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Emergency SMS sent', data);
+                        })
+                        .catch(error => {
+                            console.error('Error sending emergency SMS:', error);
+                        });
+                }, function (error) {
+                    console.error('Error getting location:', error);
+                    // Send SMS without location
+                    sendSMSWithoutLocation();
+                });
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+                // Send SMS without location
+                sendSMSWithoutLocation();
+            }
+        }
+
+        function sendSMSWithoutLocation() {
+            fetch('{% url "send_emergency_sms" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ location: null })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Emergency SMS sent without location', data);
+                })
+                .catch(error => {
+                    console.error('Error sending emergency SMS:', error);
+                });
         }
 
         function showNotification() {

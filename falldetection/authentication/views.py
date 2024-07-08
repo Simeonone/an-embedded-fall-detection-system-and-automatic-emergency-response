@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from django.shortcuts import render, redirect
 from user_registration.models import User, EmergencyContact
 from django.http import JsonResponse
@@ -9,7 +11,13 @@ import requests
 import io
 import base64
 from django.http import StreamingHttpResponse
-
+from django_twilio.client import twilio_client
+from twilio.rest import Client
+import os
+from django.db import IntegrityError
+from user_registration.forms import UserRegistrationForm
+from django.urls import reverse
+import json
 
 # import matplotlib
 # matplotlib.use('Agg') set the backend to Agg
@@ -164,3 +172,54 @@ def logout_view(request):
     # Clear the user session and redirect to the login page
     request.session.flush()
     return redirect('login')
+
+def get_twilio_client():
+    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+    return Client(account_sid, auth_token)
+
+
+def send_emergency_sms(request):
+    user_id = request.session.get('user_id')
+    if user_id:
+        user = User.objects.get(id=user_id)
+
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        location = data.get('location')
+
+        # account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+        # auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        twilio_phone_number = os.getenv('TWILIO_PHONE_NUMBER')
+        emergency_contacts = user.emergency_contacts.all()
+        client = get_twilio_client()
+        
+
+        # Get the current location
+        # location = request.POST.get('location')
+
+        # Generate the fall detection PDF link
+        fall_detection_pdf_link = request.build_absolute_uri(reverse('fall_detection_pdf'))
+
+        
+        for contact in emergency_contacts:
+            message_body = f"ALERT!!\n\nEmergency SOS triggered for {user.full_name}.\n\n"
+            message_body += f"Phone Number: {user.phone_number}\n"
+            message_body += f"Blood Group: {user.blood_group}\n"
+            message_body += f"Fall Detection report in PDF: {fall_detection_pdf_link}\n"
+            if location:
+                message_body += f"Current Location: {location}\n"
+            else:
+                message_body += "Current Location: Not available\n"
+            message_body += "Please check on them immediately."
+
+            message = client.messages.create(
+                body=message_body,
+                from_=twilio_phone_number,
+                to=contact.phone
+            )
+            print(f"SMS sent to {contact.phone}. Message SID: {message.sid}")
+
+        return JsonResponse({'status': 'success'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'User not authenticated'})

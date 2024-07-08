@@ -10,7 +10,9 @@ class FallDetectionDataCreateView(generics.CreateAPIView):
     serializer_class = FallDetectionDataSerializer
 
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+       # Return a simple response for GET requests
+       return Response({"message": "Use POST to create new fall detection data"}, status=status.HTTP_200_OK)
+
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
