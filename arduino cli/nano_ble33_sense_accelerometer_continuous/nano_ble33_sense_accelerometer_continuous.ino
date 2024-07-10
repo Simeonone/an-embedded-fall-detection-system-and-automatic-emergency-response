@@ -13,117 +13,130 @@
  * limitations under the License.
  *
  */
-
-/* Includes ---------------------------------------------------------------- */
+#include <ArduinoBLE.h>
 #include <Fall_Detection_system_inferencing.h>
-#include <Arduino_LSM9DS1.h> //Click here to get the library: https://www.arduino.cc/reference/en/libraries/arduino_lsm9ds1/
+#include <Arduino_LSM9DS1.h>
 #include <ArduinoJson.h>
 
-/* Constant defines -------------------------------------------------------- */
 #define CONVERT_G_TO_MS2    9.80665f
-#define MAX_ACCEPTED_RANGE  2.0f        // starting 03/2022, models are generated setting range to +-2, but this example use Arudino library which set range to +-4g. If you are using an older model, ignore this value and use 4.0f instead
+#define MAX_ACCEPTED_RANGE  2.0f
 
-/* Private variables ------------------------------------------------------- */
-static bool debug_nn = false; // Set this to true to see e.g. features generated from the raw signal
-static uint32_t run_inference_every_ms = 200;
+static bool debug_nn = false;
+static uint32_t run_inference_every_ms = 20;
 static rtos::Thread inference_thread(osPriorityLow);
 static float buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE] = { 0 };
 static float inference_buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE];
 static int sample_num = 0;
 
-/* Forward declaration */
 void run_inference_background();
 
-/**
-* @brief      Arduino setup function
-*/
-void setup()
-{
-    // put your setup code here, to run once:
-    Serial.begin(115200);
-    // comment out the below line to cancel the wait for USB connection (needed for native USB)
-    while (!Serial);
-    Serial.println("Edge Impulse Inferencing Demo");
+BLEService fallDetectionService("19B10000-E8F2-537E-4F6C-D104768A1214");
+BLECharacteristic fallDataCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify, 200);
+
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);
+    
+    // Blink LED to indicate power-on
+    for(int i=0; i<3; i++) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(100);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(100);
+    }
+
+    delay(1000);  // Wait for 1 second after power-on
 
     if (!IMU.begin()) {
-        ei_printf("Failed to initialize IMU!\r\n");
-    }
-    else {
-        ei_printf("IMU initialized\r\n");
+        while (1) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(500);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(500);
+        }
     }
 
     if (EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME != 3) {
-        ei_printf("ERR: EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME should be equal to 3 (the 3 sensor axes)\n");
-        return;
+        while (1) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(200);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(200);
+        }
     }
 
     inference_thread.start(mbed::callback(&run_inference_background));
+
+    if (!BLE.begin()) {
+        while (1) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(100);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(100);
+        }
+    }
+
+    // Set the connection parameters for faster data transfer
+    BLE.setConnectionInterval(0x0006, 0x0010); // Min and max interval (7.5ms to 20ms)
+    BLE.setSupervisionTimeout(100); // 1 second (10ms units)
+
+    fallDataCharacteristic.writeValue(""); // Initialize with an empty string
+
+    BLE.setDeviceName("FallDetector");
+    BLE.setLocalName("FallDetector");
+    BLE.setAdvertisedService(fallDetectionService);
+    fallDetectionService.addCharacteristic(fallDataCharacteristic);
+    BLE.addService(fallDetectionService);
+    BLE.advertise();
+
+    // Blink LED to indicate successful BLE advertising
+    for(int i=0; i<5; i++) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(200);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(200);
+    }
 }
 
-/**
- * @brief Return the sign of the number
- * 
- * @param number 
- * @return int 1 if positive (or 0) -1 if negative
- */
 float ei_get_sign(float number) {
     return (number >= 0.0) ? 1.0 : -1.0;
 }
 
-/**
- * @brief      Run inferencing in the background.
- */
-void run_inference_background()
-{
-    // wait until we have a full buffer
+void run_inference_background() {
+
     delay((EI_CLASSIFIER_INTERVAL_MS * EI_CLASSIFIER_RAW_SAMPLE_COUNT) + 100);
 
-    // This is a structure that smoothens the output result
-    // With the default settings 70% of readings should be the same before classifying.
     ei_classifier_smooth_t smooth;
-    ei_classifier_smooth_init(&smooth, 10 /* no. of readings */, 7 /* min. readings the same */, 0.8 /* min. confidence */, 0.3 /* max anomaly */);
+    ei_classifier_smooth_init(&smooth, 10, 7, 0.8, 0.3);
 
     while (1) {
-        // copy the buffer
         memcpy(inference_buffer, buffer, EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE * sizeof(float));
 
-        // Turn the raw buffer in a signal which we can the classify
         signal_t signal;
         int err = numpy::signal_from_buffer(inference_buffer, EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE, &signal);
         if (err != 0) {
-            ei_printf("Failed to create signal from buffer (%d)\n", err);
-            return;
+            continue;
         }
 
-        // Run the classifier
         ei_impulse_result_t result = { 0 };
         err = run_classifier(&signal, &result, debug_nn);
         if (err != EI_IMPULSE_OK) {
-            ei_printf("ERR: Failed to run classifier (%d)\n", err);
-            return;
+            continue;
         }
 
-        // ei_classifier_smooth_update yields the predicted label
         const char *prediction = ei_classifier_smooth_update(&smooth, &result);
 
-        // Create a JSON object
         StaticJsonDocument<200> doc;
         doc["sample_num"] = sample_num++;
         doc["predicted_activity"] = prediction;
-        doc["accel_x"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 3];  // Add accelerometer X value
-        doc["accel_y"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 2];  // Add accelerometer Y value
-        doc["accel_z"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 1];  // Add accelerometer Z value
+        doc["accel_x"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 3];
+        doc["accel_y"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 2];
+        doc["accel_z"] = buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 1];
 
-        // Serialize the JSON object to a string
         String jsonString;
-        size_t bytesWritten = serializeJson(doc, jsonString);
+        serializeJson(doc, jsonString);
 
-        if (bytesWritten == 0) {
-            // Error occurred during JSON serialization
-            ei_printf("JSON serialization failed\n");
-        } else {
-            // Send the JSON string over serial
-            Serial.println(jsonString);
+        if (BLE.connected()) {
+            fallDataCharacteristic.writeValue(jsonString.c_str());
         }
 
         delay(run_inference_every_ms);
@@ -132,21 +145,20 @@ void run_inference_background()
     ei_classifier_smooth_free(&smooth);
 }
 
-/**
-* @brief      Get data and run inferencing
-*
-* @param[in]  debug  Get debug info if true
-*/
-void loop()
-{
-    while (1) {
-        // Determine the next tick (and then sleep later)
+void loop() {
+    BLE.poll();
+    static bool wasConnected = false;
+
+    if (BLE.connected()) {
+        if (!wasConnected) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            wasConnected = true;
+        }
+
         uint64_t next_tick = micros() + (EI_CLASSIFIER_INTERVAL_MS * 1000);
 
-        // roll the buffer -3 points so we can overwrite the last one
         numpy::roll(buffer, EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE, -3);
 
-        // read to the end of the buffer
         IMU.readAcceleration(
             buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 3],
             buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 2],
@@ -163,11 +175,22 @@ void loop()
         buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 2] *= CONVERT_G_TO_MS2;
         buffer[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE - 1] *= CONVERT_G_TO_MS2;
 
-        // and wait for next tick
         uint64_t time_to_wait = next_tick - micros();
         delay((int)floor((float)time_to_wait / 1000.0f));
         delayMicroseconds(time_to_wait % 1000);
+    } else {
+        if (wasConnected) {
+            digitalWrite(LED_BUILTIN, LOW);
+            wasConnected = false;
+            BLE.advertise();
+        }
+        delay(500);
     }
+
+
+    // Blink LED periodically to show the device is still running
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    delay(100);
 }
 
 #if !defined(EI_CLASSIFIER_SENSOR) || EI_CLASSIFIER_SENSOR != EI_CLASSIFIER_SENSOR_ACCELEROMETER
