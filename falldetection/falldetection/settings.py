@@ -88,13 +88,12 @@ WSGI_APPLICATION = 'falldetection.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        'ENGINE' : 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER' : 'postgres',
-        'PASSWORD' : 'Aventador12',
-        'HOST' : 'localhost',
-        'PORT' : '5432',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'falldetection',
+        'USER': 'falldetectionuser',
+        'PASSWORD': 'falldetection123',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
