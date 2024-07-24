@@ -18,54 +18,7 @@ from django.db import IntegrityError
 from user_registration.forms import UserRegistrationForm
 from django.urls import reverse
 import json
-
-# import matplotlib
-# matplotlib.use('Agg') set the backend to Agg
-# import matplotlib.pyplot as plt
-# import matplotlib.dates as mdates
-
-# from django.http import JsonResponse
-# import subprocess
-
-# def fall_detection_view(request):
-#     if request.method == 'POST':
-#         user_id = request.POST.get('user_id')
-#         timestamp = request.POST.get('timestamp')
-#         accelerometer_data = request.POST.get('accelerometer_data')
-
-#         try:
-#             user = User.objects.get(id=user_id)
-#             fall_detection = FallDetection(
-#                 user=user,
-#                 timestamp=timestamp,
-#                 accelerometer_data=accelerometer_data
-#             )
-#             fall_detection.save()
-#             return JsonResponse({'message': 'Fall detection data saved successfully'})
-#         except User.DoesNotExist:
-#             return JsonResponse({'error': 'User not found'}, status=404)
-
-#     return JsonResponse({'error': 'Invalid request method'}, status=400)
-
-# def fall_detection_view(request):
-#     if request.method == 'POST':
-#         fall_data = request.POST.dict()
-        
-#         # Retrieve all fall detection data from the database
-#         fall_events = FallDetection.objects.all().order_by('-timestamp')
-
-
-#         # Generate the PDF
-#         html_string = render_to_string('authentication/fall_detection_pdf.html', {'fall_data': fall_data})
-#         html = HTML(string=html_string)
-#         pdf_file = html.write_pdf()
-        
-#         # Save the PDF file or store it in the database
-#         # ...
-        
-#         return JsonResponse({'status': 'success'})
-    
-#     return JsonResponse({'status': 'error'})
+from django.views.decorators.csrf import csrf_exempt
 
 def fall_detection_view(request):
     # Make a GET request to the fall detection data API
@@ -142,7 +95,7 @@ def dashboard_view(request):
     if user_id:
         user = User.objects.get(id=user_id)
         emergency_contacts = EmergencyContact.objects.filter(user=user)
-        device_connected = False  # Dummy value, update later
+        device_connected = user.device_connected  # Use the stored value
         latest_fall_detection = FallDetection.objects.order_by('-timestamp').first()
         
         if request.method == 'POST':
@@ -223,3 +176,19 @@ def send_emergency_sms(request):
         return JsonResponse({'status': 'success'})
     else:
         return JsonResponse({'status': 'error', 'message': 'User not authenticated'})
+    
+
+@csrf_exempt
+def update_device_status(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        connected = data.get('connected', False)
+        
+        user_id = request.session.get('user_id')
+        if user_id:
+            user = User.objects.get(id=user_id)
+            user.device_connected = connected
+            user.save()
+        
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)

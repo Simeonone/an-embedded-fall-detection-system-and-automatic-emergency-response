@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+CORS_ALLOW_ALL_ORIGINS = True  # Only use this for development!
 # In settings.py
 import os
 from dotenv import load_dotenv
@@ -34,7 +35,18 @@ SECRET_KEY = 'django-insecure-z4)-wi_el*lm^2lo66i3je&=6lvut5p=$$+zknglevvkp^x@71
 DEBUG = True
 
 ALLOWED_HOSTS = []
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    # Add any other allowed origins here
+]
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
+}
 
 # Application definition
 
@@ -50,9 +62,11 @@ INSTALLED_APPS = [
     'user_registration',
     'authentication',
     'django_twilio',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

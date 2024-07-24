@@ -4,7 +4,7 @@ import requests
 from bleak import BleakClient, BleakScanner
 
 FALL_DATA_CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214"
-device_address = "9e:52:0a:80:60:c6"  # Your Arduino's address
+device_address = "9e:52:0a:80:60:c6"  # The Arduino's address
 server_url = 'http://localhost:8000/api/fall-detection-data/'
 
 def notification_handler(sender, data):

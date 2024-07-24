@@ -1,18 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fall Detection Report</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 14px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 6px;
+            padding: 8px;
             text-align: left;
-            white-space: nowrap;
         }
         th {
             background-color: #f2f2f2;
@@ -23,42 +41,93 @@
         .chart-container {
             margin-top: 20px;
             width: 100%;
-            height: 400px;
+            max-width: 800px;
+        }
+        .chart-container img {
+            width: 100%;
+            height: auto;
         }
     </style>
 </head>
 <body>
     <h1>Fall Detection Report</h1>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <!-- <th>ID</th> -->
-                    <!-- <th>Sample Number</th> -->
-                    <th>Timestamp</th>
-                    <th>Predicted Activity</th>
-                    <th>Accelerometer X</th>
-                    <th>Accelerometer Y</th>
-                    <th>Accelerometer Z</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fall_event in fall_data %}
-                    <tr>
-                        <!-- <td>{{ fall_event.id }}</td> -->
-                        <!-- <td>{{ fall_event.sample_num }}</td> -->
-                        <td>{{ fall_event.timestamp }}</td>
-                        <td>{{ fall_event.predicted_activity }}</td>
-                        <td>{{ fall_event.accel_x }}</td>
-                        <td>{{ fall_event.accel_y }}</td>
-                        <td>{{ fall_event.accel_z }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <p>This report shows accelerometer data captured from an Arduino Nano 33 BLE Sense device, indicating potential fall events.</p>
+
+    <div class="section data-explanation">
+        <h2>Understanding the Data</h2>
+        <p>The table below shows accelerometer readings in three axes (X, Y, Z) over time. Sudden changes in these values may indicate a fall event.</p>
+        <ul>
+            <li>X-axis: Side-to-side motion</li>
+            <li>Y-axis: Forward and backward motion</li>
+            <li>Z-axis: Up and down motion</li>
+        </ul>
+        <p>A "Fall" prediction is made when the accelerometer data indicates a sudden change consistent with falling motion.</p>
     </div>
-    <div class="chart-container">
-        <img src="data:image/png;base64,{{ chart_data }}" alt="Accelerometer Data Chart">
+
+    <div class="section interpretation-guide">
+        <h2>Interpreting the Data</h2>
+        <p>Look for the following patterns that may indicate a serious fall:</p>
+        <ul>
+            <li>Sudden spikes in acceleration values, especially in the Z-axis</li>
+            <li>Rapid changes from positive to negative values or vice versa</li>
+            <li>Consecutive "Fall" predictions in the Predicted Activity column</li>
+        </ul>
+        <p>Note: This data should be used in conjunction with other assessments and not as the sole determinant of a fall event.</p>
+    </div>
+
+    <div>
+        <h2>Fall Detection Data</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Predicted Activity</th>
+                        <th>Accelerometer X</th>
+                        <th>Accelerometer Y</th>
+                        <th>Accelerometer Z</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fall_event in fall_data %}
+                        <tr>
+                            <td>{{ fall_event.timestamp }}</td>
+                            <td>{{ fall_event.predicted_activity }}</td>
+                            <td>{{ fall_event.accel_x }}</td>
+                            <td>{{ fall_event.accel_y }}</td>
+                            <td>{{ fall_event.accel_z }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Accelerometer Data Visualization</h2>
+        <div class="chart-container">
+            <img src="data:image/png;base64,{{ chart_data }}" alt="Accelerometer Data Chart">
+        </div>
+        <div class="chart-description">
+            <p>This chart visualizes the accelerometer data over time. The lines represent motion in each axis:</p>
+            <ul>
+                <li>Blue line: X-axis (side-to-side)</li>
+                <li>Orange line: Y-axis (forward-backward)</li>
+                <li>Green line: Z-axis (up-down)</li>
+            </ul>
+            <p>Significant spikes or dips in these lines may indicate a fall event.</p>
+        </div>
+    </div>
+
+
+    <div class="section action-recommendations">
+        <h2>Recommended Actions</h2>
+        <ul>
+            <li>If multiple fall events are detected, immediate medical attention may be required.</li>
+            <li>Check on the individual's well-being through available communication channels.</li>
+            <li>If unable to confirm the individual's status, consider dispatching emergency services for a wellness check.</li>
+            <!-- <li>Review the user's medical history and any pre-existing conditions that may increase fall risk.</li> -->
+        </ul>
     </div>
 </body>
 </html>

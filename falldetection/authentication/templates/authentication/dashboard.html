@@ -152,7 +152,8 @@
     <div class="info">
         <p><strong>Email:</strong> {{ user.email }}</p>
         <p><strong>Phone Number:</strong> {{ user.phone_number }}</p>
-        <p><strong>Device Status:</strong> {% if device_connected %}Connected{% else %}Disconnected{% endif %}</p>
+        <p><strong>Blood Group:</strong> {{ user.blood_group }}</p>
+        <!-- <p><strong>Device Status:</strong> <span id="device-status">{% if device_connected %}Connected{% else %}Disconnected{% endif %}</span></p> -->
         <h3>Emergency Contacts:</h3>
         <ul>
             {% for contact in emergency_contacts %}
@@ -372,6 +373,42 @@
 
         // Initial location update
         getLocation();
+
+        //adding the bluetooth functionality
+
+
+        function checkBluetoothStatus() {
+        if ('bluetooth' in navigator) {
+            navigator.bluetooth.getAvailability().then(available => {
+                updateDeviceStatus(available);
+            });
+        } else {
+            updateDeviceStatus(false);
+        }
+    }
+
+    function updateDeviceStatus(isConnected) {
+        const statusElement = document.querySelector('#device-status');
+        if (statusElement) {
+            statusElement.textContent = isConnected ? 'Connected' : 'Disconnected';
+        }
+
+        // Send status to server
+        fetch('{% url "update_device_status" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ connected: isConnected })
+        });
+    }
+
+    // Check status every 5 seconds
+    setInterval(checkBluetoothStatus, 5000);
+
+    // Initial check
+    checkBluetoothStatus();
     </script>
 </body>
 

@@ -8,4 +8,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('fall-detection-pdf/', views.fall_detection_view, name='fall_detection_pdf'),
     path('send-emergency-sms/', send_emergency_sms, name='send_emergency_sms'),
+    path('update-device-status/', views.update_device_status, name='update_device_status'),
 ]
