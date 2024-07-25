@@ -1,5 +1,6 @@
 # Fall Detection and Emergency SOS System
-Check the ANN model [here](https://studio.edgeimpulse.com/public/394878/live) on Edge Impulse
+Check the ANN model [here](https://studio.edgeimpulse.com/public/394878/live) on Edge Impulse.
+
 This project is a fall detection and emergency SOS system built with Django, Twilio, and Arduino. It detects falls using an Arduino board and sends emergency SMS messages to designated emergency contacts when a fall is detected.
 
 ## Features
