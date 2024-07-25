@@ -54,9 +54,9 @@ This project is a fall detection and emergency SOS system built with Django, Twi
   ```
 
 9. Run the development server:
-    python manage.py runserver
+   python manage.py runserver
 
-10. 10. Access the application in your web browser at `http://localhost:8000`.
+10. Access the application in your web browser at `http://localhost:8000`.
 
 ## Usage
 
